@@ -292,8 +292,8 @@ BEGIN
   WRITELN;
 
 END;
-
-PROCEDURE Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis: TTabla;dim:integer);
+//Posibilidad de ahorrar código
+{PROCEDURE Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis: TTabla;dim:integer);
 VAR
   i, j: integer;
 BEGIN
@@ -328,7 +328,7 @@ BEGIN
   WRITELN('      ***********************************************          ');
   WRITELN;
 
-END;
+END;}
 
 PROCEDURE Activacion(VAR tablaF: TTabla; VAR tablaC: TTabla; dim: integer);
 VAR
@@ -631,7 +631,7 @@ REPEAT
         ActualizarFila(tablaF_Bis, fila, dimension);
         ActualizarColumna(tablaC_Bis, columna, dimension);
         MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-        Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
+        //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
         numMovimientos := numMovimientos + 1;
      end
   //cifra desactivada
@@ -643,7 +643,7 @@ REPEAT
         ActualizarFila(tablaF_Bis, fila, dimension);
         ActualizarColumna(tablaC_Bis, columna, dimension);
         MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-        Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
+        //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
         numMovimientos := numMovimientos + 1;
      end;
   end;
@@ -665,7 +665,7 @@ BEGIN
                 DuplicarTablas(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
                 InicializarTablaPartida(tablaF_Bis, tablaC_Bis, dimension);
                 MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-                Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
+                //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
                 JugarPartida(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension, tope, partida, opcionPartida);
 
 end;
