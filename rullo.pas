@@ -264,7 +264,11 @@ BEGIN
   k:=1;
   FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim DO BEGIN
+       textcolor(lightred);
+       if (tablaF_Bis[i,j].activado=false) THEN
+         textcolor(white);
        WRITE(tablaF_Bis[i,j].visible:5);//rellena las columnas de una fila
+       textcolor(white);
     end;
     WRITE(tablaF[k,1].sumable:8);
     WRITE(tablaF_Bis[k,1].sumable:10);
@@ -582,9 +586,9 @@ REPEAT
      READLN(columna);
   //cifra activada
      IF(tablaF_Bis[fila,columna].activado=TRUE)THEN BEGIN
-        tablaF_Bis[fila,columna].visible:=0;
+        //tablaF_Bis[fila,columna].visible:=0;
         tablaF_Bis[fila,columna].activado:=FALSE;//desactivar
-        tablaC_Bis[fila,columna].visible:=0;
+        //tablaC_Bis[fila,columna].visible:=0;
         tablaC_Bis[fila,columna].activado:=FALSE;
         ActualizarFila(tablaF_Bis,fila,dimension);
         ActualizarColumna(tablaC_Bis,columna,dimension);
