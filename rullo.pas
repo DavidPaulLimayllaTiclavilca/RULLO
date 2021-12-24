@@ -5,7 +5,10 @@ CONST
   MIN=1;
   MAX=300;
 TYPE
+   TRuta=String[100];
+
    TLimite=MIN..MAX;
+
    TCelda=RECORD
      visible:integer;
      sumable:integer;
@@ -19,7 +22,9 @@ TYPE
    end;
 
    TTabla=ARRAY[TLimite,TLimite]OF TCelda;
+
    TArrayPartidas=ARRAY[TLimite]OF TPartida;
+
    TFicheroPartidas=FILE OF TPartida;
 
 VAR
@@ -56,6 +61,7 @@ BEGIN
   WRITELN('TECLEE CUALQUIER TECLA PARA VOLVER A INICIO');
   READLN;
 
+  CLRSCR;
 END;
 
 PROCEDURE ActualizarSumatorioFila(VAR tablaF:TTabla;i,aux,dim:integer);
@@ -85,8 +91,10 @@ BEGIN
 
   suma:=0;
   FOR j:=MIN TO dim DO BEGIN
-    aux:=tablaF_Bis[fila,j].visible;
-    suma:=suma+aux;
+    IF(tablaF_Bis[fila,j].activado=TRUE)THEN BEGIN
+        aux:=tablaF_Bis[fila,j].visible;
+        suma:=suma+aux;
+    end;
   end;
   ActualizarSumatorioFila(tablaF_Bis,fila,suma,dim);
 
@@ -99,8 +107,10 @@ BEGIN
 
   suma:=0;
   FOR i:=MIN TO dim DO BEGIN
-    aux:=tablaC_Bis[i,columna].visible;
-    suma:=suma+aux;
+    IF(tablaC_Bis[i,columna].activado=TRUE)THEN BEGIN
+        aux:=tablaC_Bis[i,columna].visible;
+        suma:=suma+aux;
+    end;
   end;
   ActualizarSumatorioColumna(tablaC_Bis,columna,suma,dim);
 
@@ -207,7 +217,7 @@ REPEAT
       IF(j=col)THEN BEGIN
          filaNula:=VerificarNCeldasFilaNula(tablaF,i,dim);
          columnaNula:=VerificarNCeldasColumnaNula(tablaC,j,dim);
-         IF(filaNula<=pred(dim))AND(columnaNula<=pred(dim))AND(tablaF[i,j].activado=TRUE)THEN BEGIN
+         IF(filaNula<=pred(dim-1))AND(columnaNula<=pred(dim-1))AND(tablaF[i,j].activado=TRUE)THEN BEGIN
             tablaF[i,j].activado:=FALSE;
             tablaC[i,j].activado:=FALSE;
             pos:=pos+1;
@@ -221,7 +231,7 @@ REPEAT
   ActualizarTablaFilas(tablaF,dim);
  ActualizarTablaColumnas(tablaC,dim);
 
- {
+
 
  FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim DO BEGIN
@@ -240,7 +250,7 @@ REPEAT
     WRITELN;
  end;
 
- }
+
 
 END;
 
@@ -265,8 +275,8 @@ BEGIN
   FOR i:=MIN TO dim DO BEGIN
     FOR j:=MIN TO dim DO BEGIN
        textcolor(lightred);
-       if (tablaF_Bis[i,j].activado=false) THEN
-         textcolor(white);
+       IF(tablaF_Bis[i,j].activado=FALSE)THEN
+            textcolor(white);
        WRITE(tablaF_Bis[i,j].visible:5);//rellena las columnas de una fila
        textcolor(white);
     end;
@@ -280,7 +290,7 @@ BEGIN
 
 END;
 
-PROCEDURE Sumatorio(tablaF,tablaC:TTabla;dim:integer);
+PROCEDURE Sumatorio(tablaF,tablaC,tablaF_Bis,tablaC_Bis:TTabla;dim:integer);
 VAR
   i,j:integer;
 BEGIN
@@ -295,6 +305,24 @@ BEGIN
   FOR j:=MIN TO dim DO
        WRITE(tablaC[1,j].sumable:2,', ');
   WRITELN;
+  WRITELN;
+
+  WRITELN('      ***********************************************          ');
+  WRITELN;
+
+  WRITE('SUMATORIO FILAS ACTUAL -ultima columna en la derecha-: ');
+  FOR i:=MIN TO dim DO
+       WRITE(tablaF_Bis[i,1].sumable:2,', ');//rellena las columnas de una fila
+  WRITELN;
+  WRITELN;
+
+  WRITE('SUMATORIO COLUMNAS ACTUAL -primera fila situada encima de la tabla-: ');
+  FOR j:=MIN TO dim DO
+       WRITE(tablaC_Bis[1,j].sumable:2,', ');
+  WRITELN;
+  WRITELN;
+
+  WRITELN('      ***********************************************          ');
   WRITELN;
 
 END;
@@ -360,61 +388,73 @@ end;
 
 FUNCTION JuegoFinalizado(tablaF_Bis,tablaF,tablaC_Bis,tablaC:TTabla;dim:integer):boolean;
 VAR
-  aux,FilasIguales,ColumnasIguales:boolean;
-  i,j:integer;
+  aux,FilasIguales,ColumnasIguales,posMaxDesactivables:boolean;
+  i,j,cont:integer;
 BEGIN
 
-  FOR i:=MIN TO dim DO BEGIN
-    FOR j:=MIN TO dim DO BEGIN
+  i:=1;j:=1;
+  REPEAT
        IF(tablaF_Bis[i,j].sumable=tablaF[i,j].sumable)THEN
            aux:=TRUE
         ELSE IF(tablaF_Bis[i,j].sumable<>tablaF[i,j].sumable)THEN
            aux:=FALSE;
-    end;
-  end;
+        i:=i+1;
+        j:=j+1;
+  UNTIL(aux=FALSE)OR((i>dim)AND(j>dim));
 
   FilasIguales:=aux;
 
-  FOR i:=MIN TO dim DO BEGIN
-    FOR j:=MIN TO dim DO BEGIN
+  i:=1;j:=1;
+  REPEAT
        IF(tablaC_Bis[i,j].sumable=tablaC[i,j].sumable)THEN
            aux:=TRUE
         ELSE IF(tablaC_Bis[i,j].sumable<>tablaC[i,j].sumable)THEN
            aux:=FALSE;
-    end;
-  end;
+        i:=i+1;
+        j:=j+1;
+  UNTIL(aux=FALSE)OR((i>dim)AND(j>dim));
 
   ColumnasIguales:=aux;
 
-  JuegoFinalizado:=(FilasIguales)AND(ColumnasIguales);
+  cont:=0;
+  FOR i:=MIN TO dim DO BEGIN
+     FOR j:=MIN TO dim DO BEGIN
+        IF(tablaF_Bis[i,j].visible=0)THEN
+           cont:=cont+1;
+     end;
+  end;
+  IF(cont=dim*2)THEN
+     posMaxDesactivables:=TRUE
+  ELSE
+     posMaxDesactivables:=FALSE;
+
+
+  JuegoFinalizado:=(FilasIguales)AND(ColumnasIguales)AND(posMaxDesactivables);
 
 end;
 
-FUNCTION ExistePartidaEnFichero(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer):boolean;
+FUNCTION ExistePartidaEnFichero(VAR fich:TFicheroPartidas;VAR ruta:TRuta;VAR partidaArray:TArrayPartidas;VAR tope:integer):boolean;
 VAR
   partidaEnFichero:boolean;
-  i:integer;
-  ruta:String[100];
+  partida:TPartida;
 BEGIN
 
-WRITELN('escriba la ruta de su fichero .bin  o .dat');
-READLN(ruta);
 ASSIGN(fich,ruta);
 {$I-}
    RESET(fich);
 {$I+}
 IF(IORESULT=0)THEN BEGIN
 
-  i:=0;
   REPEAT
-    i:=i+1;
-    IF(NOT EOF(fich))THEN
-      READ(fich,partida[i]);
-  UNTIL(NOT EOF(fich))OR(partida[tope].nombreJugador=partida[i].nombreJugador);
-  IF(EOF(fich))AND(partida[tope].nombreJugador=partida[i].nombreJugador)THEN
+    IF(NOT EOF(fich))AND(partidaArray[tope].nombreJugador<>partida.nombreJugador)THEN
+      READ(fich,partida);
+  UNTIL(EOF(fich))OR(partidaArray[tope].nombreJugador=partida.nombreJugador);
+  IF(EOF(fich))THEN
       partidaEnFichero:=FALSE
-  ELSE IF(NOT EOF(fich))AND(partida[tope].nombreJugador=partida[i].nombreJugador)THEN
+  ELSE IF(NOT EOF(fich))AND(partidaArray[tope].nombreJugador=partida.nombreJugador)THEN
       partidaEnFichero:=TRUE;
+
+  ExistePartidaEnFichero:=partidaEnFichero;
 
 END
 ELSE BEGIN
@@ -423,100 +463,92 @@ ELSE BEGIN
 END;
 close(fich);
 
-ExistePartidaEnFichero:=partidaEnFichero;
+end;
+
+PROCEDURE ModificarPuntuacionArray(VAR partidaArray:TArrayPartidas;VAR tope:integer);
+VAR
+  i:integer;
+BEGIN
+
+       i:=1;
+       WHILE(i<=pred(tope))AND(partidaArray[i].nombreJugador<>partidaArray[tope].nombreJugador)DO
+           i:=i+1;
+       IF(partidaArray[i].nombreJugador=partidaArray[tope].nombreJugador)AND(partidaArray[tope].puntuacion<=partidaArray[i].puntuacion)THEN
+           partidaArray[i].puntuacion:=partidaArray[tope].puntuacion;
 
 end;
 
-FUNCTION PosicionPartidaEnFichero(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer):integer;
+PROCEDURE SobreescribirFichero(VAR fich:TFicheroPartidas;VAR ruta:TRuta;VAR partidaArray:TArrayPartidas;VAR tope:integer);
 VAR
-  i:integer;
-  ruta:String[100];
+  partida:TPartida;
 BEGIN
 
-WRITELN('escriba la ruta de su fichero .bin  o .dat');
-READLN(ruta);
  ASSIGN(fich,ruta);
 {$I-}
    RESET(fich);
 {$I+}
 IF(IORESULT=0)THEN BEGIN
 
-  i:=0;
   REPEAT
-    i:=i+1;
-    IF(NOT EOF(fich))THEN
-      READ(fich,partida[i]);
-  UNTIL(partida[tope].nombreJugador=partida[i].nombreJugador);
-  IF(partida[tope].nombreJugador=partida[i].nombreJugador)THEN
-    PosicionPartidaEnFichero:=FILEPOS(fich)-1;
-
-END
-ELSE BEGIN
-  WRITELN('FICHERO NO ENCONTRADO');
-  REWRITE(fich);
-END;
-close(fich);
-
-end;
-
-PROCEDURE SobreescribirFichero(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer;posicion:longInt);
-BEGIN
-
-{$I-}
-   RESET(fich);
-{$I+}
-IF(IORESULT=0)THEN BEGIN
-  SEEK(fich,posicion);
-   IF(partida[tope].nombreJugador=partida[posicion].nombreJugador)THEN BEGIN
-      partida[tope].puntuacion:=partida[posicion].puntuacion;
-      WRITE(fich,partida[tope]);
-      WRITELN('PARTIDA GUARDADA');
+    IF(NOT EOF(fich))AND(partidaArray[tope].nombreJugador<>partida.nombreJugador)THEN
+       READ(fich,partida);
+  UNTIL(partidaArray[tope].nombreJugador=partida.nombreJugador);
+  IF(partidaArray[tope].nombreJugador=partida.nombreJugador)AND(partidaArray[tope].puntuacion<=partida.puntuacion)THEN BEGIN
+      partida.puntuacion:=partidaArray[tope].puntuacion;
+      SEEK(fich,FILEPOS(fich)-1);
+      WRITE(fich,partida);
+      WRITELN('PARTIDA GUARDADA1');
+      ModificarPuntuacionArray(partidaArray,tope);
    end
-   ELSE
-     WRITELN('ERROR DE ACTUALIZACION');
+   ELSE IF(partidaArray[tope].nombreJugador=partida.nombreJugador)AND(partidaArray[tope].puntuacion>partida.puntuacion)THEN
+     WRITELN('su puntuacion ha empeorada respecto a la ultima jugada');
 
 END
 ELSE BEGIN
-  WRITELN('FICHERO NO ENCONTRADO');
+  WRITELN('FICHERO NO ENCONTRADO1');
   REWRITE(fich);
 END;
 close(fich);
 
 end;
 
-PROCEDURE GuardarPartida(VAR fich:TFicheroPartidas;VAR partida:TArrayPartidas;VAR tope:integer;numMovimientos:integer;opcionPartida:char);
+PROCEDURE GuardarPartida(VAR fich:TFicheroPartidas;VAR partidaArray:TArrayPartidas;VAR tope:integer;numMovimientos:integer;opcionPartida:char);
 VAR
-  pos:longInt;
-  ruta:String[100];
+  partida:TPartida;
+  ruta:TRuta;
 BEGIN
 
   WRITELN('Escriba su nombre para guardar la partida');
-  READLN(partida[tope].nombreJugador);
-  partida[tope].puntuacion:=numMovimientos;
-  partida[tope].tipo:=opcionPartida;
+  READLN(partidaArray[tope].nombreJugador);
+  partidaArray[tope].puntuacion:=numMovimientos;
+  partidaArray[tope].tipo:=opcionPartida;
+
+  partida.nombreJugador:=partidaArray[tope].nombreJugador;
+  partida.puntuacion:=partidaArray[tope].puntuacion;
+  partida.tipo:=partidaArray[tope].tipo;
 
   WRITELN('escriba la ruta de su fichero .bin  o .dat');
   READLN(ruta);
   ASSIGN(fich,ruta);
 
-  IF(NOT ExistePartidaEnFichero(fich,partida,tope))THEN BEGIN
+  IF(NOT ExistePartidaEnFichero(fich,ruta,partidaArray,tope))THEN BEGIN
      {$I-}
         RESET(fich);
      {$I+}
      IF(IORESULT=0)THEN BEGIN
-        WRITE(fich,partida[tope]);
+         SEEK (fich, FILESIZE(fich));
+        WRITE(fich,partida);
         WRITELN('PARTIDA GUARDADA');
+        WRITELN;
      end
      ELSE BEGIN
        REWRITE(fich);
-       WRITE(fich,partida[tope]);
+       WRITE(fich,partida);
      end;
      close(fich);
   end
-  ELSE IF(ExistePartidaEnFichero(fich,partida,tope))THEN BEGIN
-    pos:=PosicionPartidaEnFichero(fich,partida,tope);
-    SobreescribirFichero(fich,partida,tope,pos);
-  end;
+  ELSE IF(ExistePartidaEnFichero(fich,ruta,partidaArray,tope))THEN
+    SobreescribirFichero(fich,ruta,partidaArray,tope);
 
 end;
 
@@ -582,7 +614,7 @@ REPEAT
   END
   ELSE IF(opcion<>'Salir')AND(opcion<>'SALIR')AND(opcion<>'salir')THEN BEGIN
      WRITELN('escriba la fila y columna de la cifra que quiere activar o desactivar');
-     READLN(fila);
+     READ(fila);
      READLN(columna);
   //cifra activada
      IF(tablaF_Bis[fila,columna].activado=TRUE)THEN BEGIN
@@ -593,7 +625,7 @@ REPEAT
         ActualizarFila(tablaF_Bis,fila,dimension);
         ActualizarColumna(tablaC_Bis,columna,dimension);
         MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-        Sumatorio(tablaF,tablaC,dimension);
+        Sumatorio(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
         numMovimientos:=numMovimientos+1;
      end
   //cifra desactivada
@@ -605,7 +637,7 @@ REPEAT
         ActualizarFila(tablaF_Bis,fila,dimension);
         ActualizarColumna(tablaC_Bis,columna,dimension);
         MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-        Sumatorio(tablaF,tablaC,dimension);
+        Sumatorio(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
         numMovimientos:=numMovimientos+1;
      end;
   end;
@@ -627,8 +659,9 @@ BEGIN
                 DuplicarTablas(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
                 InicializarTablaPartida(tablaF_Bis,tablaC_Bis,dimension);
                 MostrarTabla(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
-                Sumatorio(tablaF,tablaC,dimension);
+                Sumatorio(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension);
                 JugarPartida(tablaF,tablaC,tablaF_Bis,tablaC_Bis,dimension,tope,partida,opcionPartida);
+
 end;
 
 PROCEDURE Juego(VAR tope:integer;VAR partida:TArrayPartidas);
@@ -656,10 +689,12 @@ BEGIN
                         dimension:=5; posDesactivable:=10;
                 END;
                 IF(opcionPartida='B')THEN BEGIN
-                       dimension:=6; posDesactivable:=12;
-                END;
+                       dimension:=6;
+                       posDesactivable:=12;
+                end;
                 IF(opcionPartida='C')THEN BEGIN
-                dimension:=7; posDesactivable:=14;
+                       dimension:=7;
+                       posDesactivable:=14;
                 END;
             END;
        'D','E','F':BEGIN
@@ -696,8 +731,10 @@ PROCEDURE MenuPrincipalDelJuego(VAR tope:integer);
 VAR
   opcionMenu:integer;
   partida:TArrayPartidas;
+
 BEGIN
 
+  textcolor(white);
   WRITELN('!!! BIENVENIDO AL JUEGO DEL RULO !!!');
   WRITELN;
   WRITELN(' MODO CLASICO ');
@@ -719,7 +756,7 @@ REPEAT
      1:Ayuda;
      2:Juego(tope,partida);
      3:Ranking(partida,tope);
-     4:WRITELN(' HASTA PRONTO! ');
+     4: WRITELN(' HASTA PRONTO! ');
   END;
 
 
@@ -735,4 +772,4 @@ BEGIN
 
 READLN;
 END.
-                                               
+                                                
