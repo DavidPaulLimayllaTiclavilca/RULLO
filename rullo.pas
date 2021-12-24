@@ -30,17 +30,18 @@ TYPE
 VAR
   tope: integer;
 
-PROCEDURE ElegirPartida;
-BEGIN
-    //textcolor(lightred);
-
-      WRITELN(' PARTIDAS DISPONIBLES ');
-      WRITELN('     5x5  6x6  7x7');
-      WRITELN(' 1-9  A    B    C');
-      WRITELN('1-19  D    E    F');
-
-END;
-
+FUNCTION ElegirPartida:char;
+    VAR c: char;
+    BEGIN
+      REPEAT
+        WRITELN('     5x5  6x6  7x7');
+        WRITELN(' 1-9  A    B    C');
+        WRITELN('1-19  D    E    F');
+        WRITE('Escriba el tipo de partida que quiere jugar ');c:= readkey;
+        CLRSCR; c:=UPCASE(c);
+      UNTIL(c='A') or (c='B') or (c='C') or (c='D') or (c='E') or (c='F');
+      ElegirPartida:= c;
+    END;
 PROCEDURE Ayuda;
 BEGIN
 
@@ -234,8 +235,6 @@ REPEAT
   ActualizarTablaFilas(tablaF, dim);
  ActualizarTablaColumnas(tablaC, dim);
 
-
-
  FOR i := MIN TO dim DO BEGIN
     FOR j := MIN TO dim DO BEGIN
        WRITE(tablaF[i, j].activado: 8);
@@ -252,8 +251,6 @@ REPEAT
     end;
     WRITELN;
  end;
-
-
 
 END;
 
@@ -273,7 +270,6 @@ BEGIN
   WRITELN;
   WRITELN;
 
-
   k:=1;
   FOR i := MIN TO dim DO BEGIN
     FOR j := MIN TO dim DO BEGIN
@@ -292,43 +288,6 @@ BEGIN
   WRITELN;
 
 END;
-//Posibilidad de ahorrar código
-{PROCEDURE Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis: TTabla;dim:integer);
-VAR
-  i, j: integer;
-BEGIN
-
-  WRITE('SUMATORIO FILAS ESPERADO -penultima columna a la derecha de la tabla-: ');
-  FOR i := MIN TO dim DO
-       WRITE(tablaF[i, 1].sumable: 2,', ');//rellena las columnas de una fila
-  WRITELN;
-  WRITELN;
-
-  WRITE('SUMATORIO COLUMNAS ESPERADO -segunda fila situada encima de la  tabla-: ');
-  FOR j := MIN TO dim DO
-       WRITE(tablaC[1, j].sumable: 2,', ');
-  WRITELN;
-  WRITELN;
-
-  WRITELN('      ***********************************************          ');
-  WRITELN;
-
-  WRITE('SUMATORIO FILAS ACTUAL -ultima columna en la derecha-: ');
-  FOR i := MIN TO dim DO
-       WRITE(tablaF_Bis[i, 1].sumable: 2,', ');//rellena las columnas de una fila
-  WRITELN;
-  WRITELN;
-
-  WRITE('SUMATORIO COLUMNAS ACTUAL -primera fila situada encima de la tabla-: ');
-  FOR j := MIN TO dim DO
-       WRITE(tablaC_Bis[1, j].sumable: 2,', ');
-  WRITELN;
-  WRITELN;
-
-  WRITELN('      ***********************************************          ');
-  WRITELN;
-
-END;}
 
 PROCEDURE Activacion(VAR tablaF: TTabla; VAR tablaC: TTabla; dim: integer);
 VAR
@@ -624,14 +583,11 @@ REPEAT
      READLN(columna);
   //cifra activada
      IF(tablaF_Bis[fila, columna].activado = TRUE) THEN BEGIN
-        //tablaF_Bis[fila,columna].visible:=0;
         tablaF_Bis[fila, columna].activado := FALSE;//desactivar
-        //tablaC_Bis[fila,columna].visible:=0;
         tablaC_Bis[fila, columna].activado := FALSE;
         ActualizarFila(tablaF_Bis, fila, dimension);
         ActualizarColumna(tablaC_Bis, columna, dimension);
         MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-        //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
         numMovimientos := numMovimientos + 1;
      end
   //cifra desactivada
@@ -643,7 +599,6 @@ REPEAT
         ActualizarFila(tablaF_Bis, fila, dimension);
         ActualizarColumna(tablaC_Bis, columna, dimension);
         MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-        //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
         numMovimientos := numMovimientos + 1;
      end;
   end;
@@ -665,7 +620,6 @@ BEGIN
                 DuplicarTablas(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
                 InicializarTablaPartida(tablaF_Bis, tablaC_Bis, dimension);
                 MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-                //Sumatorio(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
                 JugarPartida(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension, tope, partida, opcionPartida);
 
 end;
@@ -676,50 +630,14 @@ VAR
   opcionPartida: char;
 BEGIN
 
-     REPEAT
-        ElegirPartida;
-        WRITELN;
-        WRITELN('Escriba el tipo de partida que quiere jugar -A, B, C, D, E o F- ');
-        READLN(opcionPartida);
-        opcionPartida := UPCASE(opcionPartida);
-        IF(opcionPartida < 'A') AND (opcionPartida > 'F') THEN BEGIN
-           WRITELN('opcion erronea, intentelo de nuevo');
-           WRITELN;
-        end;
-     UNTIL(opcionPartida >= 'A') AND (opcionPartida <= 'F');
-
+    opcionPartida:=ElegirPartida;
     CASE opcionPartida OF
-       'A', 'B', 'C':BEGIN
-                rango := 9;
-                IF(opcionPartida = 'A') THEN BEGIN
-                        dimension := 5; 
-                        posDesactivable := 10;
-                END;
-                IF(opcionPartida = 'B') THEN BEGIN
-                       dimension := 6;
-                       posDesactivable := 12;
-                end;
-                IF(opcionPartida = 'C') THEN BEGIN
-                       dimension := 7;
-                       posDesactivable := 14;
-                END;
-            END;
-       'D','E','F':BEGIN
-               rango := 19;
-               IF(opcionPartida = 'D') THEN BEGIN
-                   dimension := 5;
-                   posDesactivable := 10;
-               END;
-               IF(opcionPartida = 'E') THEN BEGIN
-                   dimension := 6;
-                   posDesactivable := 12;
-               END;
-               IF(opcionPartida = 'F') THEN BEGIN
-                   dimension := 7; 
-                   posDesactivable := 14;
-               END;
-          END;
-    end;{CASE}
+      'A','B','C': rango:= 9;
+      'D','E','F': rango:= 19;
+      END;{CASE}
+    dimension:= ord(opcionPartida) - 60;
+    posDesactivable:= ord(opcionPartida) - 55;
+    
 InicializarPartida(tope, partida, dimension, rango, posDesactivable, opcionPartida);
 
 END;
