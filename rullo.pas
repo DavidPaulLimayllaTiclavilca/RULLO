@@ -581,6 +581,8 @@ IF(JuegoFinalizado(tablaF_Bis, tablaF, tablaC_Bis, tablaC, dimension)) THEN BEGI
     WRITELN('enhorabuena!!!!');
     WRITELN('numero movimientos totales: ', numMovimientos);
     GuardarPartida(fich, numMovimientos, opcionPartida);
+    WRITELN('TECLEE CUALQUIER TECLA PARA VOLVER A INICIO');
+    READLN;
 END;
 
 end;
