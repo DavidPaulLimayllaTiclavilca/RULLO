@@ -28,7 +28,7 @@ TYPE
    TFicheroPartidas = FILE OF TPartida;
 
 VAR
-  tope: integer;
+  fich:TFicheroPartidas;
 
 FUNCTION ElegirPartida:char;
     VAR c: char;
@@ -235,23 +235,6 @@ REPEAT
   ActualizarTablaFilas(tablaF, dim);
  ActualizarTablaColumnas(tablaC, dim);
 
- FOR i := MIN TO dim DO BEGIN
-    FOR j := MIN TO dim DO BEGIN
-       WRITE(tablaF[i, j].activado: 8);
-    end;
-    WRITELN;
- end;
-
-  writeln;
- writeln;
-
- FOR i := MIN TO dim DO BEGIN
-    FOR j := MIN TO dim DO BEGIN
-       WRITE(tablaC[i, j].activado: 8);
-    end;
-    WRITELN;
- end;
-
 END;
 
 PROCEDURE MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis: TTabla; dim: integer);
@@ -259,6 +242,7 @@ VAR
   i, j, k: integer;
 BEGIN
 
+  textcolor(white); 
   FOR j := MIN TO dim DO
        WRITE(tablaC_Bis[1, j].sumable: 5);
   WRITELN;
@@ -351,8 +335,8 @@ end;
 
 FUNCTION JuegoFinalizado(tablaF_Bis, tablaF, tablaC_Bis, tablaC: TTabla; dim: integer):boolean;
 VAR
-  aux, FilasIguales, ColumnasIguales, posMaxDesactivables: boolean;
-  i, j, cont: integer;
+  aux, FilasIguales, ColumnasIguales: boolean;
+  i, j: integer;
 BEGIN
 
   i := 1;
@@ -381,189 +365,177 @@ BEGIN
 
   ColumnasIguales := aux;
 
-  cont := 0;
-  FOR i := MIN TO dim DO BEGIN
-     FOR j := MIN TO dim DO BEGIN
-        IF(tablaF_Bis[i, j].visible = 0)THEN
-           cont := cont + 1;
-     end;
-  end;
-  IF(cont = dim*2)THEN
-     posMaxDesactivables := TRUE
-  ELSE
-     posMaxDesactivables := FALSE;
-
-
-  JuegoFinalizado := (FilasIguales) AND (ColumnasIguales) AND (posMaxDesactivables);
+  JuegoFinalizado := (FilasIguales) AND (ColumnasIguales);
 
 end;
 
-FUNCTION ExistePartidaEnFichero(VAR fich: TFicheroPartidas; VAR ruta: TRuta; VAR partidaArray: TArrayPartidas; VAR tope: integer):boolean;
+FUNCTION ExistePartidaEnFichero(VAR fich:TFicheroPartidas;nombre:string):boolean;
 VAR
-  partidaEnFichero: boolean;
-  partida: TPartida;
+  partida:TPartida;
+  encontrado:boolean;
+  ExistePartida:boolean;
 BEGIN
 
-ASSIGN(fich, ruta);
-{$I-}
-   RESET(fich);
-{$I+}
-IF(IORESULT = 0) THEN BEGIN
+ {$I-}
+    RESET(fich);
+ {$I+}
+ IF(IORESULT=0)THEN BEGIN
 
-  REPEAT
-    IF(NOT EOF(fich)) AND (partidaArray[tope].nombreJugador <> partida.nombreJugador) THEN
-      READ(fich, partida);
-  UNTIL(EOF(fich)) OR (partidaArray[tope].nombreJugador = partida.nombreJugador);
-  IF(EOF(fich)) THEN
-      partidaEnFichero := FALSE
-  ELSE IF(NOT EOF(fich)) AND (partidaArray[tope].nombreJugador = partida.nombreJugador) THEN
-      partidaEnFichero := TRUE;
+    encontrado:=FALSE;
+    WHILE(NOT EOF(fich))AND(encontrado=FALSE)DO BEGIN
+       READ(fich,partida);
+       encontrado:=(partida.nombreJugador=nombre);
+    END;
+    IF(encontrado)THEN
+          ExistePartida:=TRUE
+      ELSE IF(NOT encontrado)THEN
+         ExistePartida:=FALSE;
 
-  ExistePartidaEnFichero := partidaEnFichero;
-
-END
-ELSE BEGIN
-  WRITELN('FICHERO NO ENCONTRADO');
-  REWRITE(fich);
-END;
+    ExistePartidaEnFichero:=ExistePartida;
+ END
+ ELSE
+    WRITELN('error verificacion');
 close(fich);
-
 end;
 
-PROCEDURE ModificarPuntuacionArray(VAR partidaArray: TArrayPartidas; VAR tope: integer);
+PROCEDURE SobreescribirFichero(VAR fich:TFicheroPartidas;nombre:string;numMovimientos:integer);
 VAR
-  i: integer;
+  partida:TPartida;
+  encontrado:boolean;
 BEGIN
 
-       i := 1;
-       WHILE(i <= pred(tope)) AND (partidaArray[i].nombreJugador <> partidaArray[tope].nombreJugador) DO
-           i := i + 1;
-       IF(partidaArray[i].nombreJugador = partidaArray[tope].nombreJugador) AND (partidaArray[tope].puntuacion <= partidaArray[i].puntuacion) THEN
-           partidaArray[i].puntuacion := partidaArray[tope].puntuacion;
+ {$I-}
+ RESET(fich);
+ {$I+}
+ IF(IORESULT=0)THEN BEGIN
 
-end;
+    encontrado:=FALSE;
+    WHILE(NOT EOF(fich))AND(encontrado=FALSE)DO BEGIN
+       READ(fich,partida);
+       encontrado:=(partida.nombreJugador=nombre);
+    END;
+    IF(encontrado)THEN BEGIN
+        IF(numMovimientos<partida.puntuacion)THEN
+            partida.puntuacion:=numMovimientos
+        ELSE IF(numMovimientos>=partida.puntuacion)THEN BEGIN
+           partida.puntuacion:=partida.puntuacion;
+           WRITELN('su mejor puntuacion es: ',partida.puntuacion);
+        END;
+        SEEK(fich,FILEPOS(fich)-1);
+        WRITE(fich,partida);
+    END;
+    WRITELN('PARTIDA ACTUALIZADA');
 
-PROCEDURE SobreescribirFichero(VAR fich: TFicheroPartidas; VAR ruta: TRuta; VAR partidaArray: TArrayPartidas; VAR tope: integer);
-VAR
-  partida: TPartida;
-BEGIN
-
- ASSIGN(fich, ruta);
-{$I-}
-   RESET(fich);
-{$I+}
-IF(IORESULT = 0) THEN BEGIN
-
-  REPEAT
-    IF(NOT EOF(fich)) AND (partidaArray[tope].nombreJugador <> partida.nombreJugador) THEN
-       READ(fich, partida);
-  UNTIL(partidaArray[tope].nombreJugador = partida.nombreJugador);
-  IF(partidaArray[tope].nombreJugador = partida.nombreJugador) AND (partidaArray[tope].puntuacion <= partida.puntuacion) THEN BEGIN
-      partida.puntuacion := partidaArray[tope].puntuacion;
-      SEEK(fich, FILEPOS(fich) - 1);
-      WRITE(fich, partida);
-      WRITELN('PARTIDA GUARDADA1');
-      ModificarPuntuacionArray(partidaArray, tope);
-   end
-   ELSE IF(partidaArray[tope].nombreJugador = partida.nombreJugador) AND (partidaArray[tope].puntuacion > partida.puntuacion) THEN
-     WRITELN('su puntuacion ha empeorada respecto a la ultima jugada');
-
-END
-ELSE BEGIN
-  WRITELN('FICHERO NO ENCONTRADO1');
-  REWRITE(fich);
-END;
+ END
+ ELSE
+   WRITELN('error de sobreescritura en el fichero');
 close(fich);
-
 end;
 
-PROCEDURE GuardarPartida(VAR fich: TFicheroPartidas; VAR partidaArray: TArrayPartidas; VAR tope: integer; numMovimientos: integer; opcionPartida: char);
+PROCEDURE GuardarP(VAR f:TFicheroPartidas;nombre:string;numMovimientos:integer;opcionPartida:char);
 VAR
-  partida: TPartida;
-  ruta: TRuta;
+  partida:TPartida;
+BEGIN
+
+        RESET(f);
+           seek(f,FILESIZE(f));
+           partida.nombreJugador:=nombre;
+           partida.puntuacion:=numMovimientos;
+           partida.tipo:=opcionPartida;
+           WRITE(f,partida);
+    close(f);
+    WRITELN('PARTIDA GUARDADA');
+end;
+
+PROCEDURE GuardarPartida(VAR fich:TFicheroPartidas;numMovimientos:integer;opcionPartida:char);
+VAR
+
+  nombre:string;
 BEGIN
 
   WRITELN('Escriba su nombre para guardar la partida');
-  READLN(partidaArray[tope].nombreJugador);
-  partidaArray[tope].puntuacion := numMovimientos;
-  partidaArray[tope].tipo := opcionPartida;
+  READLN(nombre);
 
-  partida.nombreJugador := partidaArray[tope].nombreJugador;
-  partida.puntuacion := partidaArray[tope].puntuacion;
-  partida.tipo := partidaArray[tope].tipo;
 
-  WRITELN('escriba la ruta de su fichero .bin  o .dat');
-  READLN(ruta);
-  ASSIGN(fich, ruta);
+     IF(IORESULT<>0)THEN begin
+        REWRITE(fich);
+        GuardarP(fich,nombre,numMovimientos,opcionPartida)
 
-  IF(NOT ExistePartidaEnFichero(fich, ruta, partidaArray, tope)) THEN BEGIN
-     {$I-}
-        RESET(fich);
-     {$I+}
-     IF(IORESULT = 0) THEN BEGIN
-         SEEK (fich, FILESIZE(fich));
-        WRITE(fich, partida);
-        WRITELN('PARTIDA GUARDADA');
-        WRITELN;
      end
-     ELSE BEGIN
-       REWRITE(fich);
-       WRITE(fich, partida);
-     end;
-     close(fich);
-  end
-  ELSE IF(ExistePartidaEnFichero(fich, ruta, partidaArray, tope)) THEN
-    SobreescribirFichero(fich, ruta, partidaArray, tope);
+    ELSE BEGIN
+         IF(ExistePartidaEnFichero(fich,nombre)=FALSE)THEN
+           GuardarP(fich,nombre,numMovimientos,opcionPartida)
+         ELSE IF(ExistePartidaEnFichero(fich,nombre)=TRUE)THEN
+           SobreescribirFichero(fich,nombre,numMovimientos);
+    end;
 
-end;
 
-PROCEDURE OrdenarPartidas(VAR partida: TArrayPartidas; VAR tope: integer);
+end; 
+
+PROCEDURE OrdenarPartidas(VAR partidaArray:TArrayPartidas;VAR top:integer);
 VAR
-  i, j: integer;
-  aux: TPartida;
+  i,j:integer;
+  aux:TPartida;
 BEGIN
 
-  FOR i := MIN TO pred(tope)DO BEGIN
-    FOR j := MIN TO tope-i DO BEGIN
-      IF(partida[j].puntuacion > partida[j + 1].puntuacion) THEN BEGIN
-          aux := partida[j + 1];
-          partida[j + 1] := partida[j];
-          partida[j] := aux;
+  FOR i:=MIN TO pred(top)DO BEGIN
+    FOR j:=MIN TO top-i DO BEGIN
+      IF(partidaArray[j].puntuacion>partidaArray[j+1].puntuacion)THEN BEGIN
+          aux:=partidaArray[j+1];
+          partidaArray[j+1]:=partidaArray[j];
+          partidaArray[j]:=aux;
       end;
     end;
   end;
 
 end;
 
-PROCEDURE Ranking(VAR partida: TArrayPartidas; VAR tope: integer);
+PROCEDURE Ranking(VAR fich:TFicheroPartidas);
 VAR
-  i: integer;
+  i,top:integer;
+  partida:TPartida;
+  partidaArray:TArrayPartidas;
 BEGIN
 
-  IF(tope = 0) THEN BEGIN
+  {$I-}
+     RESET(fich);
+  {$I+}
+  IF(IORESULT<>0)THEN BEGIN
       WRITELN('ranking vacio');
-      WRITELN;
-  END
-  ELSE BEGIN
-     OrdenarPartidas(partida, tope);
+      REWRITE(fich);
+  end
 
-     FOR i := MIN TO tope DO BEGIN
-        WRITELN('nombre del jugador: ', partida[i].nombreJugador);
-        WRITELN('puntuacion: ', partida[i].puntuacion);
-        WRITELN('tipo de partida: ', partida[i].tipo);
+  ELSE BEGIN
+
+    top:=0;
+    WHILE(NOT EOF(fich))DO BEGIN
+        READ(fich,partida);
+        top:=top+1;
+        partidaArray[top].nombreJugador:=partida.nombreJugador;
+        partidaArray[top].puntuacion:=partida.puntuacion;
+        partidaArray[top].tipo:=partida.tipo;  ;
+    END;
+
+     OrdenarPartidas(partidaArray,top);
+
+     FOR i:=MIN TO top DO BEGIN
+        WRITELN('nombre del jugador: ',partidaArray[i].nombreJugador);
+        WRITELN('puntuacion: ',partidaArray[i].puntuacion);
+        WRITELN('tipo de partida: ',partidaArray[i].tipo);
         WRITELN;
      end;
-     WRITELN('PRESIONE CUALQUIER TECLA PARA VOLVER A INICIO');
-     READLN;
+
   end;
+  WRITELN('TECLEE CUALQUIER TECLA PARA VOLVER A INICIO');
+  READLN;
 
-END;
+close(fich);
+END; 
 
-PROCEDURE JugarPartida(tablaF, tablaC: TTabla; VAR tablaF_Bis: TTabla; VAR tablaC_Bis: TTabla; dimension: integer; VAR tope: integer; VAR partida: TArrayPartidas; opcionPartida: char);
+PROCEDURE JugarPartida(VAR fich:TFicheroPartidas;tablaF, tablaC: TTabla; VAR tablaF_Bis: TTabla; VAR tablaC_Bis: TTabla; dimension: integer; VAR tope: integer; VAR partida: TArrayPartidas; opcionPartida: char);
 VAR
   fila, columna, numMovimientos: integer;
   opcion: string[5];
-  fich: TFicheroPartidas;
 BEGIN
 
    InicializarTablaPartida(tablaF_Bis, tablaC_Bis, dimension);
@@ -576,11 +548,13 @@ REPEAT
   IF(opcion = 'Salir') OR (opcion = 'SALIR') OR (opcion = 'salir') THEN BEGIN
      WRITELN('abandonando partida...');
      WRITELN;
+     clrscr;
   END
   ELSE IF(opcion <> 'Salir') AND (opcion <> 'SALIR') AND (opcion <> 'salir') THEN BEGIN
      WRITELN('escriba la fila y columna de la cifra que quiere activar o desactivar');
      READ(fila);
      READLN(columna);
+     clrscr;
   //cifra activada
      IF(tablaF_Bis[fila, columna].activado = TRUE) THEN BEGIN
         tablaF_Bis[fila, columna].activado := FALSE;//desactivar
@@ -606,12 +580,11 @@ UNTIL(opcion = 'Salir') OR (opcion = 'SALIR') OR (opcion = 'salir') OR (JuegoFin
 IF(JuegoFinalizado(tablaF_Bis, tablaF, tablaC_Bis, tablaC, dimension)) THEN BEGIN
     WRITELN('enhorabuena!!!!');
     WRITELN('numero movimientos totales: ', numMovimientos);
-    tope := tope + 1;
-    GuardarPartida(fich, partida, tope, numMovimientos, opcionPartida);
+    GuardarPartida(fich, numMovimientos, opcionPartida);
 END;
 
 end;
-PROCEDURE InicializarPartida(VAR tope: integer; VAR partida: TArrayPartidas; dimension, rango, posDesactivable: integer; opcionPartida: char);
+PROCEDURE InicializarPartida(VAR fich:TFicheroPartidas; dimension, rango, posDesactivable: integer; opcionPartida: char);
 VAR
   tablaF, tablaC, tablaF_Bis, tablaC_Bis: TTabla;
 BEGIN
@@ -620,11 +593,11 @@ BEGIN
                 DuplicarTablas(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
                 InicializarTablaPartida(tablaF_Bis, tablaC_Bis, dimension);
                 MostrarTabla(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension);
-                JugarPartida(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension, tope, partida, opcionPartida);
+                JugarPartida(tablaF, tablaC, tablaF_Bis, tablaC_Bis, dimension, opcionPartida);
 
 end;
 
-PROCEDURE Juego(VAR tope: integer; VAR partida: TArrayPartidas);
+PROCEDURE Juego(VAR fich:TFicheroPartidas);
 VAR
   dimension, rango, posDesactivable: integer;
   opcionPartida: char;
@@ -642,7 +615,7 @@ BEGIN
                    END;
       END;{CASE}
       
-InicializarPartida(tope, partida, dimension, rango, posDesactivable, opcionPartida);
+InicializarPartida(fich, dimension, rango, posDesactivable, opcionPartida);
 
 END;
 
@@ -658,15 +631,13 @@ BEGIN
 
 END;
 
-PROCEDURE MenuPrincipalDelJuego(VAR tope:integer);
+PROCEDURE MenuPrincipalDelJuego(VAR fich:TFicheroPartidas);
 //el usuario seleccionará una de las tres opciones del menu, esto se repetirá tantas veces hasta que el usuario seleccione una opción del menú, después será un case
 VAR
   opcionMenu: integer;
-  partida: TArrayPartidas;
 
 BEGIN
 
-  textcolor(white);
   WRITELN('!!! BIENVENIDO AL JUEGO DEL RULO !!!');
   WRITELN;
   WRITELN(' MODO CLASICO ');
@@ -685,10 +656,23 @@ REPEAT
   until(opcionMenu >= 1) AND (opcionMenu <= 4);
 
   CASE opcionMenu OF
-     1: Ayuda;
-     2: Juego(tope, partida);
-     3: Ranking(partida, tope);
-     4: WRITELN(' HASTA PRONTO! ');
+     1:BEGIN
+       CLRSCR;
+       Ayuda;
+     end;
+     2:BEGIN
+       CLRSCR;
+       Juego(fich);
+     end;
+     3:BEGIN
+       CLRSCR;
+       Ranking(fich);
+       CLRSCR;
+     end;
+     4:BEGIN
+       CLRSCR;
+       WRITELN(' HASTA PRONTO! ');
+     end;
   END;
 
 
@@ -699,8 +683,8 @@ END;
 BEGIN
 
   RANDOMIZE;
-  tope := 0;
-  MenuPrincipalDelJuego(tope);
+  ASSIGN(fich,'E:\Partidas.bin');
+  MenuPrincipalDelJuego(fich);
 
 READLN;
 END.
