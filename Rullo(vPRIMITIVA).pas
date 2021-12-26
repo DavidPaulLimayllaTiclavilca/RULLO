@@ -12,9 +12,8 @@ program Rullo;
   var celda: Tcelda;
       tabla: Ttabla;
   
-  PROCEDURE Ayuda;  {OPCION 1 AYUDA COMO JUGAR}
-  BEGIN
-
+  PROCEDURE Ayuda;
+BEGIN
   WRITELN;
   WRITELN(' AYUDA ');
   WRITELN;
@@ -30,9 +29,9 @@ program Rullo;
   WRITELN;
   WRITELN;
   WRITELN('TECLEE CUALQUIER TECLA PARA VOLVER A INICIO');
-  READKEY;
+  READLN;
   CLRSCR;
-  END;
+END;
       
   FUNCTION ElegirPartida:char;  {OPCION 2 ELEGIR PARTIDA}
     VAR c: char;
